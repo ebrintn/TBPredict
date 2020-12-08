@@ -1,0 +1,84 @@
+#Program to clean genomics data for Tuberculosis preliminary investigation. Note the code requires 
+#access to the TB portals genomic data which cannot be shared but can be accessed with permission
+#from TB portals
+
+
+#First load in genomics data and patient data into the program 
+library(readr)
+TB_Portals_Genomics_20201021 <- read_csv("~/4th_Year/Semester_1/MDSC_523/Project/Locker/TB Portals Published data_20201021/TB Portals Published data_20201021/TB Portals_Genomics_20201021.csv")
+TB_Portals_Patient_Cases_20201021 <- read_csv("~/4th_Year/Semester_1/MDSC_523/Project/Locker/TB Portals Published data_20201021/TB Portals Published data_20201021/TB Portals Patient Cases_20201021.csv")
+
+
+#Remove dubplicated data
+TB_Portals_Genomics_20201021_unique<-TB_Portals_Genomics_20201021[!duplicated(TB_Portals_Genomics_20201021$condition_id), ]
+TB_Portals_Genomics_20201021_unique <- TB_Portals_Genomics_20201021_unique[order(TB_Portals_Genomics_20201021_unique$condition_id),]
+
+ids <- TB_Portals_Genomics_20201021_unique$condition_id
+
+
+#Find the appropriate patient samples for the samples with genomic information
+neededSamples <- TB_Portals_Patient_Cases_20201021$condition_id%in%ids
+availableSamples <- TB_Portals_Patient_Cases_20201021$condition_id[neededSamples]
+sampleResistanceType <- TB_Portals_Patient_Cases_20201021$type_of_resistance[neededSamples]
+
+sampleMatrix <- matrix(cbind(availableSamples, sampleResistanceType),ncol = 2)
+sampleMatrix <- sampleMatrix[order(sampleMatrix[,1]),]
+sampleResistanceType <- sampleMatrix[,2]
+
+#Record genomic resistance type as integers
+integerSampleResistanceType <- c()
+for(sample in sampleResistanceType){
+  if(sample == "MDF non XDR"){
+    resisType = 0
+  } else if (sample == "Mono DR"){
+    resisType = 1
+  } else if (sample == "Poly DR"){
+    resisType = 2
+  } else if (sample == "Sensitive"){
+    resisType = 3
+  } else if (sample == "XDR"){
+    resisType = 4
+  }
+  integerSampleResistanceType = c(integerSampleResistanceType, resisType)
+}
+
+
+
+
+#Find the required SNPs, record as integers
+prevalentSNPS <- TB_Portals_Genomics_20201021_unique$gene_snp_mutations
+
+embBSNPS <- as.integer(as.logical(grepl("embB", prevalentSNPS)))
+gyrASNPS <- as.integer(as.logical(grepl("gyrA", prevalentSNPS)))
+inhAProSNPS <- as.integer(as.logical(grepl("inhA-Pro", prevalentSNPS)))
+katGSNPS <- as.integer(as.logical(grepl("katG", prevalentSNPS)))
+pncASNPS <- as.integer(as.logical(grepl("pncA", prevalentSNPS)))
+rpoBSNPS <- as.integer(as.logical(grepl("rpoB", prevalentSNPS)))
+rpsLSNPS <- as.integer(as.logical(grepl("rpsL", prevalentSNPS)))
+rrsSNPS <- as.integer(as.logical(grepl("rrs", prevalentSNPS)))
+
+
+resistanceMatrix <- data.frame(cbind( embBSNPS, gyrASNPS, inhAProSNPS, katGSNPS, pncASNPS, rpoBSNPS, rpsLSNPS, rrsSNPS))
+
+
+#Look at PCA of all data samples
+write.csv(resistanceMatrix,"mutationsIntegerDataFrame.csv", row.names = FALSE, col.names =  F)
+write.csv(integerSampleResistanceType, "resistanceIntegerDataFrame.csv", row.names = F, col.names = F)
+
+
+
+#Convert via PCA
+library(ggbiplot)
+resistance.pca <- prcomp(resistanceMatrix, center = TRUE, scale = TRUE)
+ggbiplot(resistance.pca, ellipse = TRUE,  groups = sampleMatrix[,2])
+write.csv(resistance.pca$x[,1:2], "pcaResistanceDataFrame.csv", row.names = F)
+
+#PCA of training and testing sample
+training_sample <- resistanceMatrix[1:(nrow(resistanceMatrix)/2),]
+testing_sample <- resistanceMatrix[(nrow(resistanceMatrix)/2)+1:nrow(resistanceMatrix),]
+resistance.pca.training <- prcomp(training_sample, center = TRUE, scale = TRUE)
+resistance.pca.testing <- predict(resistance.pca.training, newdata = testing_sample)
+ggbiplot(resistance.pca.training, ellipse = TRUE,  groups = sampleMatrix[1:(nrow(resistanceMatrix)/2),2])
+write.csv(resistance.pca.training$x[,1:2], "pcaResistanceDataFrameTraining.csv", row.names = F)
+write.csv(resistance.pca.testing[,1:2], "pcaResistanceDataFrameTesting.csv", row.names = F)
+
