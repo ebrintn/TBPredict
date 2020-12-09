@@ -9,12 +9,12 @@ import csv
 
 #Open the data frame with both the mutations and the resistance
 print("Opening data files")
-with open('pcaResistanceDataFrameTrainingTesting.csv', newline='') as f:
+with open('pcaMutationsDataFrameTrainingTesting.csv', newline='') as f:
     reader = csv.reader(f)
     mutationsDataFrame = list(reader)
 
 
-with open('resistanceIntegerDataFrame2.csv', newline='') as f2:
+with open('resistanceIntegerDataFrame.csv', newline='') as f2:
     reader = csv.reader(f2)
     resistanceDataFrame = list(reader)
 
@@ -26,8 +26,6 @@ for i in range(len(mutationsDataFrame)):
 for i in range(len(resistanceDataFrame)):
      resistanceDataFrame[i] = int(resistanceDataFrame[i][0])
 
-print(mutationsDataFrame)
-print(resistanceDataFrame)
 
 #Make the training and testing datasets by dividing the data in half
 print("Constructing training and testing datasets")
@@ -52,7 +50,6 @@ def find_accuracy(predictions_training, predictions_testing,
             numCorrect += 1
 
      percentCorrectTest = numCorrect/len(training_data)
-     #print("Percent Correct Training: ", percentCorrect)
 
 
      numCorrect = 0
@@ -62,7 +59,6 @@ def find_accuracy(predictions_training, predictions_testing,
             numCorrect += 1
 
      percentCorrectTrain = numCorrect/len(testing_data)
-     #print("Percent Correct Testing: ", percentCorrect)
 
      return ([percentCorrectTest,percentCorrectTrain])
 
@@ -149,15 +145,8 @@ def plot_contours(ax, clf, xx, yy, **params):
 
 
 X = mutationsDataFrame
-Y = resistanceDataFrame
-	
-#Convert data frames to integer form
-print("Converting data to integer form")
-for i in range(len(X)):
-     X[i] = list(map(float, X[i]))
+y = resistanceDataFrame
 
-for i in range(len(y)):
-     y[i] = int(y[i][0])
 
 X=np.array(X)
 y = np.array(y)
@@ -168,7 +157,7 @@ y = np.array(y)
 print("Building models, second round")
   # SVM regularization parameter
 models = (svm.SVC(kernel='rbf', C=1),
-          svm.SVC(kernel='poly', C=1, degree = 7))
+          svm.SVC(kernel='poly', C=10, degree = 3))
 models = (clf.fit(X, y) for clf in models)
 
 print("Making Figure")

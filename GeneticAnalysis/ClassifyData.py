@@ -16,7 +16,7 @@ with open('mutationsIntegerDataFrame.csv', newline='') as f:
     mutationsDataFrame = list(reader)
 
 
-with open('resistanceIntegerDataFrame2.csv', newline='') as f2:
+with open('resistanceIntegerDataFrame.csv', newline='') as f2:
     reader = csv.reader(f2)
     resistanceDataFrame = list(reader)
 
@@ -101,14 +101,18 @@ print("\n\nTraining the decision tree\n")
 clf2 = tree.DecisionTreeClassifier(min_impurity_decrease = 0.01)
 clf2 = clf2.fit(mutTrainingData,resisTrainingData)
 
+
+
 trainDatPredictions = list(clf2.predict(mutTrainingData))
 testDatPredictions = list(clf2.predict(mutTestingData))
 
+print(find_accuracy(trainDatPredictions, testDatPredictions))
+
 feat_names = ["embB","gyrA","inhA","katG","PncA","rpoB","rpsL","rrs"]
-class_names = ["DR", "Sensitive"]
+class_names = ["MDR non XDR", "Mono DR", "Poly DR", "Sensitive", "XDR"]
 graph = Source(tree.export_graphviz(clf2, out_file = None, feature_names = feat_names, class_names = class_names, filled = True, impurity = False))
 graph.format = 'png'
 graph.render('dtree_render')
 
-print(find_accuracy(trainDatPredictions, testDatPredictions))
+
 

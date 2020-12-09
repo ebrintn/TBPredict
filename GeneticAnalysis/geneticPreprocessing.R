@@ -28,7 +28,7 @@ sampleResistanceType <- sampleMatrix[,2]
 #Record genomic resistance type as integers
 integerSampleResistanceType <- c()
 for(sample in sampleResistanceType){
-  if(sample == "MDF non XDR"){
+  if(sample == "MDR non XDR"){
     resisType = 0
   } else if (sample == "Mono DR"){
     resisType = 1
@@ -62,15 +62,16 @@ resistanceMatrix <- data.frame(cbind( embBSNPS, gyrASNPS, inhAProSNPS, katGSNPS,
 
 
 #Look at PCA of all data samples
-write.csv(resistanceMatrix,"mutationsIntegerDataFrame.csv", row.names = FALSE, col.names =  F)
-write.csv(integerSampleResistanceType, "resistanceIntegerDataFrame.csv", row.names = F, col.names = F)
+write.csv(resistanceMatrix,"mutationsIntegerDataFrame.csv", row.names = FALSE)
+write.csv(integerSampleResistanceType, "resistanceIntegerDataFrame.csv", row.names = F)
 
 
 
 #Convert via PCA
-library(ggbiplot)
+library(ggfortify)
 resistance.pca <- prcomp(resistanceMatrix, center = TRUE, scale = TRUE)
-ggbiplot(resistance.pca, ellipse = TRUE,  groups = sampleMatrix[,2])
+colnames(sampleMatrix) <- c("id","phenotype")
+autoplot(resistance.pca, data = sampleMatrix, colour = "phenotype")
 write.csv(resistance.pca$x[,1:2], "pcaResistanceDataFrame.csv", row.names = F)
 
 #PCA of training and testing sample
@@ -78,7 +79,7 @@ training_sample <- resistanceMatrix[1:(nrow(resistanceMatrix)/2),]
 testing_sample <- resistanceMatrix[(nrow(resistanceMatrix)/2)+1:nrow(resistanceMatrix),]
 resistance.pca.training <- prcomp(training_sample, center = TRUE, scale = TRUE)
 resistance.pca.testing <- predict(resistance.pca.training, newdata = testing_sample)
-ggbiplot(resistance.pca.training, ellipse = TRUE,  groups = sampleMatrix[1:(nrow(resistanceMatrix)/2),2])
-write.csv(resistance.pca.training$x[,1:2], "pcaResistanceDataFrameTraining.csv", row.names = F)
-write.csv(resistance.pca.testing[,1:2], "pcaResistanceDataFrameTesting.csv", row.names = F)
+autoplot(resistance.pca.training, data = sampleMatrix[1:(nrow(sampleMatrix)/2),], colour = "phenotype")
 
+recombined <- rbind(resistance.pca.training$x[,1:2],resistance.pca.testing[,1:2])
+write.csv(recombined, "pcaMutationsDataFrameTrainingTesting.csv", row.names = F)
