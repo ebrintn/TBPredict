@@ -61,7 +61,7 @@ rrsSNPS <- as.integer(as.logical(grepl("rrs", prevalentSNPS)))
 resistanceMatrix <- data.frame(cbind( embBSNPS, gyrASNPS, inhAProSNPS, katGSNPS, pncASNPS, rpoBSNPS, rpsLSNPS, rrsSNPS))
 
 
-#Look at PCA of all data samples
+#Write out the data that has been preprocessed 
 write.csv(resistanceMatrix,"mutationsIntegerDataFrame.csv", row.names = FALSE)
 write.csv(integerSampleResistanceType, "resistanceIntegerDataFrame.csv", row.names = F)
 
@@ -72,7 +72,6 @@ library(ggfortify)
 resistance.pca <- prcomp(resistanceMatrix, center = TRUE, scale = TRUE)
 colnames(sampleMatrix) <- c("id","phenotype")
 autoplot(resistance.pca, data = sampleMatrix, colour = "phenotype")
-write.csv(resistance.pca$x[,1:2], "pcaResistanceDataFrame.csv", row.names = F)
 
 #PCA of training and testing sample
 training_sample <- resistanceMatrix[1:(nrow(resistanceMatrix)/2),]
